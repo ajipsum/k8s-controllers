@@ -1,5 +1,6 @@
 .DS_Store
 .DS_*
+text.txt
 
 # Binaries for programs and plugins
 *.exe
