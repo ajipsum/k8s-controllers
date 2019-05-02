@@ -1,20 +1,21 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
 	"encoding/json"
+	"fmt"
 	"io"
-	"log"
-	"github.com/luksa/website-controller/pkg/v1"
 	"io/ioutil"
+	"log"
+	"net/http"
 	"strings"
+
+	v1 "github.com/k8s-controllers/static-website-controller/pkg/v1"
 )
 
 func main() {
 	log.Println("website-controller started.")
 	for {
-		resp, err := http.Get("http://localhost:8001/apis/extensions.example.com/v1/websites?watch=true")
+		resp, err := http.Get("http://localhost:8001/apis/static.microowl.com/v1/websites?watch=true")
 		if err != nil {
 			panic(err)
 		}
@@ -47,8 +48,8 @@ func createWebsite(website v1.Website) {
 }
 
 func deleteWebsite(website v1.Website) {
-	deleteResource(website, "api/v1", "services", getName(website));
-	deleteResource(website, "apis/extensions/v1beta1", "deployments", getName(website));
+	deleteResource(website, "api/v1", "services", getName(website))
+	deleteResource(website, "apis/extensions/v1beta1", "deployments", getName(website))
 }
 
 func createResource(webserver v1.Website, apiGroup string, kind string, filename string) {
@@ -84,5 +85,5 @@ func deleteResource(webserver v1.Website, apiGroup string, kind string, name str
 }
 
 func getName(website v1.Website) string {
-	return website.Metadata.Name + "-website";
+	return website.Metadata.Name + "-website"
 }

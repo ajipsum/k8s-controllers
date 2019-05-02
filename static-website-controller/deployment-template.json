@@ -63,7 +63,7 @@
             "volumeMounts": [
               {
                 "name": "html",
-                "mountPath": "/gitrepo"
+                "mountPath": "/gitrepo/static/"
               }
             ]
           }
