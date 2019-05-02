@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"strings"
 
-	v1 "github.com/k8s-controllers/static-website-controller/pkg/v1"
+	v1 "github.com/k8s-controllers/static-website-controller-v1/pkg/v1"
 )
 
 func main() {

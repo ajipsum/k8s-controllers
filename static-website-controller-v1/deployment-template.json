@@ -31,7 +31,8 @@
             "ports": [
               {
                 "containerPort": 80,
-                "protocol": "TCP"
+                "protocol": "TCP",
+                "targetPort": 80
               }
             ]
           },
@@ -49,7 +50,7 @@
               },
               {
                 "name": "GIT_SYNC_BRANCH",
-                "value": "master"
+                "value": "static"
               },
               {
                 "name": "GIT_SYNC_REV",
@@ -63,7 +64,7 @@
             "volumeMounts": [
               {
                 "name": "html",
-                "mountPath": "/gitrepo/static/"
+                "mountPath": "/gitrepo"
               }
             ]
           }
