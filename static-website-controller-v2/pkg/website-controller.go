@@ -9,13 +9,13 @@ import (
 	"net/http"
 	"strings"
 
-	v1 "github.com/k8s-controllers/static-website-controller-v1/pkg/v1"
+	v1 "github.com/k8s-controllers/static-website-controller-v2/pkg/v1"
 )
 
 func main() {
 	log.Println("website-controller started.")
 	for {
-		resp, err := http.Get("http://localhost:8001/apis/static.microowl.com/v1/websites?watch=true")
+		resp, err := http.Get("http://localhost:8001/apis/static2.microowl.com/v1/websites?watch=true")
 		if err != nil {
 			panic(err)
 		}

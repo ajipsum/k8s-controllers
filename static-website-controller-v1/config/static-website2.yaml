@@ -1,6 +1,6 @@
-apiVersion: static.microowl.com/v1
+apiVersion: static1.microowl.com/v1
 kind: Website
 metadata:
-  name: static2
+  name: static1-2
 spec:
   gitRepo: https://github.com/ajipsum/k8s-controllers.git

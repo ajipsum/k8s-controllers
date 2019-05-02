@@ -15,7 +15,7 @@ import (
 func main() {
 	log.Println("website-controller started.")
 	for {
-		resp, err := http.Get("http://localhost:8001/apis/static.microowl.com/v1/websites?watch=true")
+		resp, err := http.Get("http://localhost:8001/apis/static1.microowl.com/v1/websites?watch=true")
 		if err != nil {
 			panic(err)
 		}
