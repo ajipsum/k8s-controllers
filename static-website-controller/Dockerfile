@@ -1,5 +1,5 @@
 FROM scratch
-MAINTAINER marko.luksa@gmail.com
+MAINTAINER soud@utexas.edu
 ADD website-controller /
 ADD deployment-template.json /
 ADD service-template.json /
