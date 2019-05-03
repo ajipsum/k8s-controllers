@@ -50,6 +50,7 @@ func createWebsite(website v1.Website) {
 func deleteWebsite(website v1.Website) {
 	deleteResource(website, "api/v1", "services", getName(website))
 	deleteResource(website, "apis/extensions/v1beta1", "deployments", getName(website))
+	deleteResource(website, "apis/extensions/v1beta1", "replicasets", getName(website))
 }
 
 func createResource(webserver v1.Website, apiGroup string, kind string, filename string) {
@@ -70,7 +71,20 @@ func createResource(webserver v1.Website, apiGroup string, kind string, filename
 
 func deleteResource(webserver v1.Website, apiGroup string, kind string, name string) {
 	log.Printf("Deleting %s with name %s in namespace %s", kind, name, webserver.Metadata.Namespace)
+	here1, err1 := http.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:8001/%s/namespaces/%s/%s/%s", apiGroup, webserver.Metadata.Namespace, kind, name), nil)
+	if err1 != nil {
+		fmt.Println("\nerror:", err1)
+	}
+	fmt.Print("here we are 1\n", string(formatRequest(here1)))
+
+	here2, err2 := json.MarshalIndent(here1, "", " ")
+	if err2 != nil {
+		fmt.Println("\nerror:", err2)
+	}
+	fmt.Print("here we are\n", string(here2))
+
 	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("http://localhost:8001/%s/namespaces/%s/%s/%s", apiGroup, webserver.Metadata.Namespace, kind, name), nil)
+
 	if err != nil {
 		log.Fatal(err)
 		return
@@ -85,5 +99,37 @@ func deleteResource(webserver v1.Website, apiGroup string, kind string, name str
 }
 
 func getName(website v1.Website) string {
+	name, err := json.MarshalIndent(website, "", " ")
+	if err != nil {
+		fmt.Print("error:", err)
+	}
+	fmt.Print(string(name))
 	return website.Metadata.Name + "-website"
+}
+
+// formatRequest generates ascii representation of a request
+func formatRequest(r *http.Request) string {
+	// Create return string
+	var request []string
+	// Add the request string
+	url := fmt.Sprintf("%v %v %v", r.Method, r.URL, r.Proto)
+	request = append(request, url)
+	// Add the host
+	request = append(request, fmt.Sprintf("Host: %v", r.Host))
+	// Loop through headers
+	for name, headers := range r.Header {
+		name = strings.ToLower(name)
+		for _, h := range headers {
+			request = append(request, fmt.Sprintf("%v: %v", name, h))
+		}
+	}
+
+	// If this is a POST, add post data
+	if r.Method == "POST" {
+		r.ParseForm()
+		request = append(request, "\n")
+		request = append(request, r.Form.Encode())
+	}
+	// Return the request as a string
+	return strings.Join(request, "\n")
 }

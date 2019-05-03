@@ -1,0 +1,342 @@
+{
+	"info": {
+		"_postman_id": "e3fb4e1a-4c1a-43f8-b006-cb0e874bbe78",
+		"name": "K8S-API",
+		"description": "Explore k8s API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "k8s/api/v1",
+			"item": [
+				{
+					"name": "pods",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{k8s}}/api/v1/pods",
+							"host": [
+								"{{k8s}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"pods"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "services",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{k8s}}/api/v1/services",
+							"host": [
+								"{{k8s}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"services"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "nodes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{k8s}}/api/v1/nodes",
+							"host": [
+								"{{k8s}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"nodes"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "k8s/api/v1/clusters/1[x]",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{k8s}}/api/v1/clusters/1",
+							"host": [
+								"{{k8s}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"clusters",
+								"1"
+							]
+						},
+						"description": "Creates a K8S cluster in the cloud"
+					},
+					"response": []
+				},
+				{
+					"name": "k8s/api/v1/clusters/1[x]",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{k8s}}/api/v1/clusters/1",
+							"host": [
+								"{{k8s}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"clusters",
+								"1"
+							]
+						},
+						"description": "Get the cluster details"
+					},
+					"response": []
+				},
+				{
+					"name": "k8s/api/v1/clusters/1[x]",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name",
+									"value": "myK8Scluster",
+									"type": "text"
+								},
+								{
+									"key": "nodeInstanceType",
+									"value": "t2.medium",
+									"type": "text"
+								},
+								{
+									"key": "nodeInstanceSpotPrice",
+									"value": "0.2",
+									"type": "text"
+								},
+								{
+									"key": "nodeMin",
+									"value": "2",
+									"type": "text"
+								},
+								{
+									"key": "nodeMax",
+									"value": "4",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{k8s}}/api/v1/clusters/1",
+							"host": [
+								"{{k8s}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"clusters",
+								"1"
+							]
+						},
+						"description": "Delete a K8S cluster from the cloud, cleans up resources"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "k8s/apis/extended/v1beta1",
+			"item": [
+				{
+					"name": "deployments",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{k8s}}/apis/extensions/v1beta1/deployments",
+							"host": [
+								"{{k8s}}"
+							],
+							"path": [
+								"apis",
+								"extensions",
+								"v1beta1",
+								"deployments"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "replicaset",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{k8s}}/apis/extensions/v1beta1/namespaces/default/replicasets/",
+							"host": [
+								"{{k8s}}"
+							],
+							"path": [
+								"apis",
+								"extensions",
+								"v1beta1",
+								"namespaces",
+								"default",
+								"replicasets",
+								""
+							],
+							"query": [
+								{
+									"key": "spec",
+									"value": "selector",
+									"disabled": true
+								},
+								{
+									"key": "matchLabels",
+									"value": "webserver",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "k8s API ROOT",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "name",
+							"value": "myK8Scluster",
+							"type": "text"
+						},
+						{
+							"key": "nodeInstanceType",
+							"value": "t2.medium",
+							"type": "text"
+						},
+						{
+							"key": "nodeInstanceSpotPrice",
+							"value": "0.2",
+							"type": "text"
+						},
+						{
+							"key": "nodeMin",
+							"value": "2",
+							"type": "text"
+						},
+						{
+							"key": "nodeMax",
+							"value": "4",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{k8s}}",
+					"host": [
+						"{{k8s}}"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "8aaba0a0-edbe-4329-b8b1-a53e4a3d3c92",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "a36e6d96-507a-4825-9cb0-c2853bd6edd8",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}
