@@ -38,6 +38,8 @@ type WebsiteSpec struct {
 	DeploymentName string `json:"deploymentName"`
 	Replicas       *int32 `json:"replicas"`
 
+	WordpressImage string `json:"image"`
+
 	DbUsername string `json:"username"`
 	DbPassword string `json:"password"`
 	DbHost     string `json:"host"`
