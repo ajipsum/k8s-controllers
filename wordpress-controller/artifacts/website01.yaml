@@ -1,0 +1,7 @@
+apiVersion: dynamic.microowl.com/v1alpha1
+kind: Website
+metadata:
+  name: website-wp1
+spec:
+  deploymentName: website-wp1
+  replicas: 1

@@ -14,41 +14,52 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1alpha1
+package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // +genclient
+
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// Foo is a specification for a Foo resource
-type Foo struct {
+// Website is a specification for a Website resource
+type Website struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   FooSpec   `json:"spec"`
-	Status FooStatus `json:"status"`
+	Spec   WebsiteSpec   `json:"spec"`
+	Status WebsiteStatus `json:"status"`
 }
 
-// FooSpec is the spec for a Foo resource
-type FooSpec struct {
+// WebsiteSpec is the spec for a Website resource
+type WebsiteSpec struct {
 	DeploymentName string `json:"deploymentName"`
 	Replicas       *int32 `json:"replicas"`
+
+	DbUsername string `json:"username"`
+	DbPassword string `json:"password"`
+	DbHost     string `json:"host"`
+
+	Commands []string `json:"commands"`
 }
 
-// FooStatus is the status for a Foo resource
-type FooStatus struct {
+// WebsiteStatus is the status for a Website resource
+type WebsiteStatus struct {
 	AvailableReplicas int32 `json:"availableReplicas"`
+
+	ServiceIP   string `json:"serviceIP"`
+	ServicePort string `json:"servicePort"`
+	Status      string `json:"status"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// FooList is a list of Foo resources
-type FooList struct {
+// WebsiteList is a list of Website resources
+type WebsiteList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata"`
 
-	Items []Foo `json:"items"`
+	Items []Website `json:"items"`
 }

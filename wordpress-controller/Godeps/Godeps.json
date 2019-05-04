@@ -1,5 +1,5 @@
 {
-	"ImportPath": "k8s.io/sample-controller",
+	"ImportPath": "github.com/k8s-controllers/wordpress-controller",
 	"GoVersion": "unknown",
 	"GodepVersion": "gen-godeps",
 	"Packages": [
