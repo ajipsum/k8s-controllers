@@ -23,13 +23,13 @@ import (
 	sync "sync"
 	time "time"
 
+	versioned "github.com/k8s-controllers/wordpress-controller/pkg/generated/clientset/versioned"
+	internalinterfaces "github.com/k8s-controllers/wordpress-controller/pkg/generated/informers/externalversions/internalinterfaces"
+	wordpresscontroller "github.com/k8s-controllers/wordpress-controller/pkg/generated/informers/externalversions/wordpresscontroller"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
-	versioned "k8s.io/sample-controller/pkg/generated/clientset/versioned"
-	internalinterfaces "k8s.io/sample-controller/pkg/generated/informers/externalversions/internalinterfaces"
-	samplecontroller "k8s.io/sample-controller/pkg/generated/informers/externalversions/samplecontroller"
 )
 
 // SharedInformerOption defines the functional option type for SharedInformerFactory.
@@ -172,9 +172,9 @@ type SharedInformerFactory interface {
 	ForResource(resource schema.GroupVersionResource) (GenericInformer, error)
 	WaitForCacheSync(stopCh <-chan struct{}) map[reflect.Type]bool
 
-	Samplecontroller() samplecontroller.Interface
+	Dynamic() wordpresscontroller.Interface
 }
 
-func (f *sharedInformerFactory) Samplecontroller() samplecontroller.Interface {
-	return samplecontroller.New(f, f.namespace, f.tweakListOptions)
+func (f *sharedInformerFactory) Dynamic() wordpresscontroller.Interface {
+	return wordpresscontroller.New(f, f.namespace, f.tweakListOptions)
 }
