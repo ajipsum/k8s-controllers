@@ -36,6 +36,7 @@ import (
 	"k8s.io/client-go/util/workqueue"
 	"k8s.io/klog"
 
+	wpv1 "github.com/k8s-controllers/wordpress-controller/pkg/apis/wordpresscontroller/v1"
 	clientset "github.com/k8s-controllers/wordpress-controller/pkg/generated/clientset/versioned"
 	websitescheme "github.com/k8s-controllers/wordpress-controller/pkg/generated/clientset/versioned/scheme"
 	informers "github.com/k8s-controllers/wordpress-controller/pkg/generated/informers/externalversions/wordpresscontroller/v1"
@@ -63,13 +64,13 @@ const (
 type Controller struct {
 	// kubeclientset is a standard kubernetes clientset
 	kubeclientset kubernetes.Interface
-	// sampleclientset is a clientset for our own API group
-	sampleclientset clientset.Interface
+	// websiteclientset is a clientset for our own API group
+	websiteclientset clientset.Interface
 
 	deploymentsLister appslisters.DeploymentLister
 	deploymentsSynced cache.InformerSynced
-	websiteLister     listers.WebsiteLister
-	websiteSynced     cache.InformerSynced
+	websitesLister    listers.WebsiteLister
+	websitesSynced    cache.InformerSynced
 
 	// workqueue is a rate limited work queue. This is used to queue work to be
 	// processed instead of performing it as soon as a change happens. This
@@ -85,7 +86,7 @@ type Controller struct {
 // NewController returns a new sample controller
 func NewController(
 	kubeclientset kubernetes.Interface,
-	sampleclientset clientset.Interface,
+	websiteclientset clientset.Interface,
 	deploymentInformer appsinformers.DeploymentInformer,
 	websiteInformer informers.WebsiteInformer) *Controller {
 
@@ -101,11 +102,11 @@ func NewController(
 
 	controller := &Controller{
 		kubeclientset:     kubeclientset,
-		sampleclientset:   sampleclientset,
+		websiteclientset:  websiteclientset,
 		deploymentsLister: deploymentInformer.Lister(),
 		deploymentsSynced: deploymentInformer.Informer().HasSynced,
-		websiteLister:     websiteInformer.Lister(),
-		websiteSynced:     websiteInformer.Informer().HasSynced,
+		websitesLister:    websiteInformer.Lister(),
+		websitesSynced:    websiteInformer.Informer().HasSynced,
 		workqueue:         workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "Website"),
 		recorder:          recorder,
 	}
@@ -316,7 +317,7 @@ func (c *Controller) syncHandler(key string) error {
 	return nil
 }
 
-func (c *Controller) updateWebsiteStatus(website *websitev1.Website, deployment *appsv1.Deployment) error {
+func (c *Controller) updateWebsiteStatus(website *wpv1.Website, deployment *appsv1.Deployment) error {
 	// NEVER modify objects from the store. It's a read-only, local cache.
 	// You can use DeepCopy() to make a deep copy of original object and modify this copy
 	// Or create a copy manually for better performance
@@ -326,7 +327,7 @@ func (c *Controller) updateWebsiteStatus(website *websitev1.Website, deployment 
 	// we must use Update instead of UpdateStatus to update the Status block of the Website resource.
 	// UpdateStatus will not allow changes to the Spec of the resource,
 	// which is ideal for ensuring nothing other than resource status has been updated.
-	_, err := c.sampleclientset.SamplecontrollerV1alpha1().Websites(website.Namespace).Update(websiteCopy)
+	_, err := c.websiteclientset.DynamicV1().Websites(website.Namespace).Update(websiteCopy)
 	return err
 }
 
@@ -386,7 +387,7 @@ func (c *Controller) handleObject(obj interface{}) {
 // newDeployment creates a new Deployment for a Website resource. It also sets
 // the appropriate OwnerReferences on the resource so handleObject can discover
 // the Website resource that 'owns' it.
-func newDeployment(website *websitev1.Website) *appsv1.Deployment {
+func newDeployment(website *wpv1.Website) *appsv1.Deployment {
 	labels := map[string]string{
 		"app":        "nginx",
 		"controller": website.Name,
@@ -396,7 +397,7 @@ func newDeployment(website *websitev1.Website) *appsv1.Deployment {
 			Name:      website.Spec.DeploymentName,
 			Namespace: website.Namespace,
 			OwnerReferences: []metav1.OwnerReference{
-				*metav1.NewControllerRef(website, websitev1.SchemeGroupVersion.WithKind("Website")),
+				*metav1.NewControllerRef(website, wpv1.SchemeGroupVersion.WithKind("Website")),
 			},
 		},
 		Spec: appsv1.DeploymentSpec{

@@ -33,7 +33,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 
-	wordpresscontroller "github.com/k8s-controllers/wordpress-controller/pkg/apis/wordpresscontroller/v1alpha1"
+	wordpresscontroller "github.com/k8s-controllers/wordpress-controller/pkg/apis/wordpresscontroller/v1"
 	"github.com/k8s-controllers/wordpress-controller/pkg/generated/clientset/versioned/fake"
 	informers "github.com/k8s-controllers/wordpress-controller/pkg/generated/informers/externalversions"
 )
