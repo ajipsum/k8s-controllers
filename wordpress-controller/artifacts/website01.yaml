@@ -1,4 +1,4 @@
-apiVersion: dynamic.microowl.com/v1alpha1
+apiVersion: dynamic.microowl.com/v1
 kind: Website
 metadata:
   name: website-wp1
