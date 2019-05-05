@@ -36,9 +36,6 @@ Usage: $(basename "$0") <generators> <output-package> <apis-package> <groups-ver
 Examples:
   $(basename "$0") all             github.com/example/project/pkg/client github.com/example/project/pkg/apis "foo:v1 bar:v1alpha1,v1beta1"
   $(basename "$0") deepcopy,client github.com/example/project/pkg/client github.com/example/project/pkg/apis "foo:v1 bar:v1alpha1,v1beta1"
-
-  $(basename "$0") all             github.com/k8s-controllers/wordpress-controller/pkg/client github.com/k8s-controllers/wordpress-controller/pkg/apis "dynamic.microowl.com:v1"
-  $(basename "$0") deepcopy,client github.com/k8s-controllers/wordpress-controller/pkg/client github.com/k8s-controllers/wordpress-controller/pkg/apis "dynamic.microowl.com:v1"
 EOF
   exit 0
 fi

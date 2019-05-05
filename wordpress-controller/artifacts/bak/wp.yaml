@@ -1,0 +1,9 @@
+apiVersion: dynamic.microowl.com/v1
+kind: Website
+metadata:
+    name: website-wp1
+spec:
+    # url: http://192.168.64.12
+    deploymentName: website-wp1
+    image: ajipsum/wordpress-apache:latest
+    replicas: 1

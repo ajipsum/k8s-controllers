@@ -17,8 +17,11 @@ limitations under the License.
 package v1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+type SecretRef string
 
 // +genclient
 // +genclient:noStatus
@@ -35,25 +38,23 @@ type Website struct {
 
 // WebsiteSpec is the spec for a Website resource
 type WebsiteSpec struct {
-	DeploymentName string `json:"deploymentName"`
-	Replicas       *int32 `json:"replicas"`
+	Replicas *int32 `json:"replicas"`
 
-	WordpressImage string `json:"image"`
-
-	DbUsername string `json:"username"`
-	DbPassword string `json:"password"`
-	DbHost     string `json:"host"`
-
-	Commands []string `json:"commands"`
+	Image          string                 `json:"image"`
+	Env            []corev1.EnvVar        `json:"env" patchStrategy:"merge" patchMergeKey:"name"`
+	EnvFrom        []corev1.EnvFromSource `json:"envFrom"`
+	DeploymentName string                 `json:"deploymentName"`
+	Commands       []string               `json:"commands"`
 }
 
 // WebsiteStatus is the status for a Website resource
 type WebsiteStatus struct {
-	AvailableReplicas int32 `json:"availableReplicas"`
-
-	ServiceIP   string `json:"serviceIP"`
-	ServicePort string `json:"servicePort"`
-	Status      string `json:"status"`
+	AvailableReplicas int32    `json:"availableReplicas"`
+	ActionHistory     []string `json:"actionHistory"`
+	VerifyCmd         string   `json:"verifyCommand"`
+	ServiceIP         string   `json:"serviceIP"`
+	ServicePort       string   `json:"servicePort"`
+	Status            string   `json:"status"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

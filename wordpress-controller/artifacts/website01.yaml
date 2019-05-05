@@ -1,7 +1,57 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: database
+type: Opaque
+data:
+  USER: root
+  PASSWORD: client01
+  DATABASE: wordpress
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: wpsalt
+type: Opaque
+data:
+AUTH_KEY: RU5UOEBLUENENlNKJzkpaE1TKSx4V0tQSShvYENDbW5ZVkZoQEt9TE5TLzIwOjhPZGY5JSc2YTReY3p4a1g0LQ==
+SECURE_AUTH_KEY: MXJRLlZZQUtdcyk7KX5bKnskeixBe20uN3ZeXzFCby5TbU1Jdkh1VSFGSn10bjNwUWYmUmBdcylbMk9Tajp2LQ==
+LOGGED_IN_KEY: Sm4xdmVGSV0zP0pmPVUsN3llX1lacChvP2M3YWtlYiVEX3JZbk4jKEo+QGVAL1ZUdHd5aVlKbEBWaT1zcj11PQ==
+NONCE_KEY: Jm9eTn1oNTRKLn5pOTlbWHpqQ3tNJG53YVgneEFGPW1PPiYwdSRDVTFPLlB1RVc1NVZtcmRPfWMoYG43QmNNdg==
+AUTH_SALT: RnorP35BZFB3d3IwfVNsWnYsL0szZiE3Xj0tV2NQY20wc1IxZFpob2dfNnFqXn1tLjpDUmQzXV5XZCh3W1ApPw==
+SECURE_AUTH_SALT: QllpZVlrfkExRzFnWlpMUDI/aXJieyVifW0yP2BUP3Z0ZHwwJCFNS0klbEUsNGBUbWhjeE4sNVNge2Mzbzt5IQ==
+LOGGED_IN_SALT: QHNeZSJaSTU0PnNWKS9QOjxmWConIVRhMmwuWFpHO2QxV0xxQzBdY0NeTjFpNiU+PCEnYEA1ZT5KSy5oanl4Ug==
+NONCE_SALT: OCclcHg7UTIzZXdkVi9PJCsoVWZTWkUuTUwnZ2N3IzFPfGpZRWBAaD5VMTtbdnIzWHtSdnt4ZUVWcGtETnhzUQ==
+---
 apiVersion: dynamic.microowl.com/v1
 kind: Website
 metadata:
   name: website-wp1
 spec:
-  deploymentName: website-wp1
   replicas: 1
+  image: ajipsum/wordpress-apache:latest
+  secretRef: website-wp1
+  envFrom:
+    - prefix: "WP_"
+      secretRef:
+        name: wpsalt
+  env:
+    - name: WORDPRESS_DB_HOST
+      value: websites.cujxcm1nmul2.us-east-1.rds.amazonaws.com
+    - name: WORDPRESS_DB_USER
+      valueFrom:
+        secretKeyRef:
+        name: database
+        key: USER
+    - name: WORDPRESS_DB_PASSWORD
+      valueFrom:
+        secretKeyRef:
+        name: database
+        key: PASSWORD
+    - name: WORDPRESS_DB_NAME
+      valueFrom:
+        secretKeyRef:
+        name: database
+        key: DATABASE
+  setupCommands: ["create user client14 with password 'client14';","create database moodle with owner client14 encoding 'utf8' template=template0;"]
