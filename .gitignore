@@ -42,3 +42,7 @@ _testmain.go
 
 
 *.prof
+env.list.1.bak
+env.list.1.bak
+env.list.bak
+env.list
