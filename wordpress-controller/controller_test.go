@@ -89,14 +89,14 @@ func (f *fixture) newController() (*Controller, informers.SharedInformerFactory,
 	k8sI := kubeinformers.NewSharedInformerFactory(f.kubeclient, noResyncPeriodFunc())
 
 	c := NewController(f.kubeclient, f.client,
-		k8sI.Apps().V1().Deployments(), i.Samplecontroller().V1alpha1().Websites())
+		k8sI.Apps().V1().Deployments(), i.Dynamic().V1().Websites())
 
 	c.websitesSynced = alwaysReady
 	c.deploymentsSynced = alwaysReady
 	c.recorder = &record.FakeRecorder{}
 
 	for _, f := range f.websiteLister {
-		i.Samplecontroller().V1alpha1().Websites().Informer().GetIndexer().Add(f)
+		i.Dynamic().V1().Websites().Informer().GetIndexer().Add(f)
 	}
 
 	for _, d := range f.deploymentLister {

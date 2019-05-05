@@ -389,7 +389,7 @@ func (c *Controller) handleObject(obj interface{}) {
 // the Website resource that 'owns' it.
 func newDeployment(website *wpv1.Website) *appsv1.Deployment {
 	labels := map[string]string{
-		"app":        "nginx",
+		"app":        "wordpress",
 		"controller": website.Name,
 	}
 	return &appsv1.Deployment{
@@ -412,8 +412,8 @@ func newDeployment(website *wpv1.Website) *appsv1.Deployment {
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
 						{
-							Name:  "nginx",
-							Image: "nginx:latest",
+							Name:  "wordpress",
+							Image: "quay.io/presslabs/wordpress-runtime:4.9.8-php71",
 						},
 					},
 				},
