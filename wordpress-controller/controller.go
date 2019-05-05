@@ -413,7 +413,7 @@ func newDeployment(website *wpv1.Website) *appsv1.Deployment {
 					Containers: []corev1.Container{
 						{
 							Name:  "wordpress",
-							Image: "quay.io/presslabs/wordpress-runtime:4.9.8-php71",
+							Image: "ajipsum/wordpress-apache:latest",
 						},
 					},
 				},
