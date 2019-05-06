@@ -18,12 +18,11 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os"
 	"strings"
 	"time"
 
 	apiv1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	apiutil "k8s.io/apimachinery/pkg/util/intstr"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -64,6 +63,11 @@ const (
 	// MessageResourceSynced is the message used for an Event fired when a Website
 	// is synced successfully
 	MessageResourceSynced = "Website synced successfully"
+)
+
+const (
+	PASSWORD    = "mysecretpassword"
+	MINIKUBE_IP = "192.168.64.12"
 )
 
 // Controller is the controller implementation for Website resources
@@ -284,7 +288,7 @@ func (c *Controller) syncHandler(key string) error {
 	var setupCommands []string
 
 	// Get the deployment with the name specified in Website.spec
-	deployment, err := c.deploymentsLister.Deployments(website.Namespace).Get(deploymentName)
+	_, err = c.deploymentsLister.Deployments(website.Namespace).Get(deploymentName)
 	// If the resource doesn't exist, we'll create it
 	if errors.IsNotFound(err) {
 		fmt.Printf("Received request to create CRD %s\n", deploymentName)
@@ -360,23 +364,6 @@ func getCommandsToRun(actionHistory []string, setupCommands []string) []string {
 	return commandsToRun
 }
 
-func (wp *wpv1.Website) env() []corev1.EnvVar {
-	scheme := "http"
-
-	out := append([]corev1.EnvVar{
-		{
-			Name:  "WP_HOME",
-			Value: fmt.Sprintf("%s://%s", scheme, wp.Spec.Domains[0]),
-		},
-		{
-			Name:  "WP_SITEURL",
-			Value: fmt.Sprintf("%s://%s/wp", scheme, wp.Spec.Domains[0]),
-		},
-	}, w.Spec.Env...)
-
-	return out
-}
-
 func canonicalize(setupCommands1 []string) []string {
 	var setupCommands []string
 	//Convert setupCommands to Lower case
@@ -419,7 +406,7 @@ func (c *Controller) enqueueWebsite(obj interface{}) {
 		utilruntime.HandleError(err)
 		return
 	}
-	c.workqueue.AddRateLimited(key)
+	c.workqueue.Add(key)
 }
 
 // handleObject will take any resource implementing metav1.Object and attempt
@@ -479,9 +466,9 @@ func updateCRD(website *wpv1.Website, c *Controller, setupCommands []string) {
 	fmt.Printf("Command:[%s]\n", setupCommands)
 
 	if len(setupCommands) > 0 {
-		file := createTempDBFile(setupCommands)
+		// file := createTempDBFile(setupCommands)
 		fmt.Println("Now setting up the database")
-		setupDatabase(serviceIP, servicePort, file)
+		// setupDatabase(serviceIP, servicePort, file)
 	}
 }
 
@@ -489,23 +476,46 @@ func createDeployment(website *wpv1.Website, c *Controller) (string, string, []s
 
 	deploymentsClient := c.kubeclientset.AppsV1().Deployments(apiv1.NamespaceDefault)
 	image := website.Spec.Image
-	env := website.Spec.Env
-	envFrom := website.Spec.EnvFrom
-	username := env["WORDPRESS_DB_USER"]
-	password := env.WORDPRESS_DB_PASSWORD
-	database := env.WORDPRESS_DB_NAME
-	host := env.WORDPRESS_DB_HOST
-	wpPrefix := env.WORDPRESS_TABLE_PREFIX
+	// 	var env []corev1.EnvVar
+	// envFrom := website.Spec.EnvFrom
+	// username := env["WORDPRESS_DB_USER"]
+	// password := env.WORDPRESS_DB_PASSWORD
+	// database := env.WORDPRESS_DB_NAME
+	// host := env.WORDPRESS_DB_HOST
+	// wpPrefix := env.WORDPRESS_TABLE_PREFIX
 	// username := website.Spec.Username
 	// password := website.Spec.Password
 	// database := website.Spec.Database
 	deploymentName := website.Spec.DeploymentName
 	setupCommands := canonicalize(website.Spec.Commands)
 
-	fmt.Printf("   Deployment:%v, Image:%v, User:%v\n", deploymentName, image, username)
-	fmt.Printf("   Password:%v, Database:%v\n", password, database)
-	fmt.Printf("   SetupCmds:%v\n", setupCommands)
+	// fmt.Printf("   Deployment:%v, Image:%v, User:%v\n", deploymentName, image, username)
+	// fmt.Printf("   Password:%v, Database:%v\n", password, database)
+	fmt.Printf("SetupCmds:%v\n", setupCommands)
+	env := []v1.EnvVar{
+		{
+			Name:  "WORDPRESS_DB_HOST",
+			Value: "websites.cujxcm1nmul2.us-east-1.rds.amazonaws.com",
+		},
+		{
+			Name:  "WORDPRESS_DB_USER",
+			Value: "root",
+		},
+		{
+			Name:  "WORDPRESS_DB_PASSWORD",
+			Value: "client01",
+		},
+		{
+			Name:  "WORDPRESS_DB_NAME",
+			Value: "wordpress",
+		},
+		{
+			Name:  "WORDPRESS_TABLE_PREFIX",
+			Value: "WP_",
+		},
+	}
 
+	// deploymen := website.wp.WebPodTemplateSpec()
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: deploymentName,
@@ -523,6 +533,7 @@ func createDeployment(website *wpv1.Website, c *Controller) (string, string, []s
 						"app": deploymentName,
 					},
 				},
+
 				Spec: apiv1.PodSpec{
 					Containers: []apiv1.Container{
 						{
@@ -536,27 +547,14 @@ func createDeployment(website *wpv1.Website, c *Controller) (string, string, []s
 							ReadinessProbe: &apiv1.Probe{
 								Handler: apiv1.Handler{
 									TCPSocket: &apiv1.TCPSocketAction{
-										Port: apiutil.FromInt(80),
+										Port: apiutil.FromInt(8080),
 									},
 								},
 								InitialDelaySeconds: 5,
 								TimeoutSeconds:      60,
 								PeriodSeconds:       2,
 							},
-							Env: []apiv1.EnvVar{
-								{
-									name:  WORDPRESS_DB_HOST,
-									value: host,
-									name:  WORDPRESS_DB_USER,
-									value: username,
-									name:  WORDPRESS_DB_PASSWORD,
-									value: password,
-									name:  WORDPRESS_DB_NAME,
-									value: database,
-									name:  WORDPRESS_TABLE_PREFIX,
-									value: wpPrefix,
-								},
-							},
+							Env: env,
 						},
 					},
 				},
@@ -587,8 +585,8 @@ func createDeployment(website *wpv1.Website, c *Controller) (string, string, []s
 			Ports: []apiv1.ServicePort{
 				{
 					Name:       "my-port",
-					Port:       5432,
-					TargetPort: apiutil.FromInt(5432),
+					Port:       80,
+					TargetPort: apiutil.FromInt(8080),
 					Protocol:   apiv1.ProtocolTCP,
 				},
 			},
@@ -629,7 +627,7 @@ func createDeployment(website *wpv1.Website, c *Controller) (string, string, []s
 				if podCond.Type == corev1.PodReady {
 					if podCond.Status == corev1.ConditionTrue {
 						//fmt.Println("Pod is running.")
-						readyPods += 1
+						readyPods++
 						//fmt.Printf("ReadyPods:%d\n", readyPods)
 						//fmt.Printf("TotalPods:%d\n", len(pods.Items))
 					}
@@ -649,9 +647,9 @@ func createDeployment(website *wpv1.Website, c *Controller) (string, string, []s
 	time.Sleep(time.Second * 2)
 
 	if len(setupCommands) > 0 {
-		file := createTempDBFile(setupCommands)
+		// file := createTempDBFile(setupCommands)
 		fmt.Println("Now setting up the database")
-		setupDatabase(serviceIP, servicePort, file)
+		// setupDatabase(serviceIP, servicePort, file)
 	}
 
 	// List Deployments
@@ -670,24 +668,43 @@ func createDeployment(website *wpv1.Website, c *Controller) (string, string, []s
 	return serviceIP, servicePort, setupCommands, verifyCmdString
 }
 
-func createTempDBFile(setupCommands []string) *os.File {
-	file, err := ioutil.TempFile("/tmp", "create-db1")
+func getPods(c *Controller, deploymentName string) *apiv1.PodList {
+	// TODO(devkulkarni): This is returning all Pods. We should change this
+	// to only return Pods whose Label matches the Deployment Name.
+	pods, err := c.kubeclientset.CoreV1().Pods("default").List(metav1.ListOptions{
+		LabelSelector: deploymentName,
+		// LabelSelector: metav1.LabelSelector{
+		// 	MatchLabels: map[string]string{
+		// 		"app": deploymentName,
+		// 	},
+		// },
+	})
+	fmt.Printf("There are %d pods in the cluster\n", len(pods.Items))
 	if err != nil {
-		panic(err)
+		fmt.Printf("%s", err)
 	}
-
-	fmt.Printf("Database setup file:%s\n", file.Name())
-
-	for _, command := range setupCommands {
-		//fmt.Printf("Command: %v\n", command)
-		// TODO: Interpolation of variables
-		file.WriteString(command)
-		file.WriteString("\n")
-	}
-	file.Sync()
-	file.Close()
-	return file
+	fmt.Println("Got Pods: %s", pods)
+	return pods
 }
+
+// func createTempDBFile(setupCommands []string) *os.File {
+// 	file, err := ioutil.TempFile("/tmp", "create-db1")
+// 	if err != nil {
+// 		panic(err)
+// 	}
+
+// 	fmt.Printf("Database setup file:%s\n", file.Name())
+
+// 	for _, command := range setupCommands {
+// 		//fmt.Printf("Command: %v\n", command)
+// 		// TODO: Interpolation of variables
+// 		file.WriteString(command)
+// 		file.WriteString("\n")
+// 	}
+// 	file.Sync()
+// 	file.Close()
+// 	return file
+// }
 
 // newDeployment creates a new Deployment for a Website resource. It also sets
 // the appropriate OwnerReferences on the resource so handleObject can discover
@@ -718,7 +735,7 @@ func newDeployment(website *wpv1.Website) *appsv1.Deployment {
 					Containers: []corev1.Container{
 						{
 							Name:  "wordpress",
-							Image: "ajipsum/wordpress-apache:latest",
+							Image: "aajipsum/wordpress:latest",
 						},
 					},
 				},
@@ -726,5 +743,4 @@ func newDeployment(website *wpv1.Website) *appsv1.Deployment {
 		},
 	}
 }
-
 func int32Ptr(i int32) *int32 { return &i }
