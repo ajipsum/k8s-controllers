@@ -360,7 +360,7 @@ func getCommandsToRun(actionHistory []string, setupCommands []string) []string {
 	return commandsToRun
 }
 
-func (w *wpv1.Website) env() []corev1.EnvVar {
+func (wp *wpv1.Website) env() []corev1.EnvVar {
 	scheme := "http"
 
 	out := append([]corev1.EnvVar{
