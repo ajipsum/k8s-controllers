@@ -40,9 +40,10 @@ type Website struct {
 type WebsiteSpec struct {
 	Replicas *int32 `json:"replicas"`
 
-	Image          string                 `json:"image"`
-	Env            []corev1.EnvVar        `json:"env" patchStrategy:"merge" patchMergeKey:"name"`
-	EnvFrom        []corev1.EnvFromSource `json:"envFrom"`
+	Image string          `json:"image"`
+	Env   []corev1.EnvVar `json:"env" patchStrategy:"merge" patchMergeKey:"name"`
+	// +optional
+	EnvFrom        []corev1.EnvFromSource `json:"envFrom,omitempty"`
 	DeploymentName string                 `json:"deploymentName"`
 	Commands       []string               `json:"commands"`
 }

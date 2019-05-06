@@ -23,9 +23,9 @@ import (
 	sync "sync"
 	time "time"
 
-	versioned "github.com/k8s-controllers/wordpress-controller/pkg/generated/clientset/versioned"
-	internalinterfaces "github.com/k8s-controllers/wordpress-controller/pkg/generated/informers/externalversions/internalinterfaces"
-	wordpresscontroller "github.com/k8s-controllers/wordpress-controller/pkg/generated/informers/externalversions/wordpresscontroller"
+	versioned "github.com/k8s-controllers/wordpress-controller/pkg/client/clientset/versioned"
+	internalinterfaces "github.com/k8s-controllers/wordpress-controller/pkg/client/informers/externalversions/internalinterfaces"
+	wordpresscontroller "github.com/k8s-controllers/wordpress-controller/pkg/client/informers/externalversions/wordpresscontroller"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"

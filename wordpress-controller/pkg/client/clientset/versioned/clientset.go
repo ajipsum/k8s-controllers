@@ -19,7 +19,7 @@ limitations under the License.
 package versioned
 
 import (
-	dynamicv1 "github.com/k8s-controllers/wordpress-controller/pkg/generated/clientset/versioned/typed/wordpresscontroller/v1"
+	dynamicv1 "github.com/k8s-controllers/wordpress-controller/pkg/client/clientset/versioned/typed/wordpresscontroller/v1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"

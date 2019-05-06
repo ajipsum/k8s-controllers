@@ -18,7 +18,13 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
+	"strings"
 	"time"
+
+	apiv1 "k8s.io/api/core/v1"
+	apiutil "k8s.io/apimachinery/pkg/util/intstr"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -240,6 +246,7 @@ func (c *Controller) processNextWorkItem() bool {
 // converge the two. It then updates the Status block of the Website resource
 // with the current status of the resource.
 func (c *Controller) syncHandler(key string) error {
+	fmt.Println("Inside syncHandler 1")
 	// Convert the namespace/name string into a distinct namespace and name
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
@@ -260,6 +267,7 @@ func (c *Controller) syncHandler(key string) error {
 		return err
 	}
 
+	fmt.Println("Inside syncHandler 2")
 	deploymentName := website.Spec.DeploymentName
 	if deploymentName == "" {
 		// We choose to absorb the error here as the worker would requeue the
@@ -269,60 +277,130 @@ func (c *Controller) syncHandler(key string) error {
 		return nil
 	}
 
+	var verifyCmd string
+	var actionHistory []string
+	var serviceIP string
+	var servicePort string
+	var setupCommands []string
+
 	// Get the deployment with the name specified in Website.spec
 	deployment, err := c.deploymentsLister.Deployments(website.Namespace).Get(deploymentName)
 	// If the resource doesn't exist, we'll create it
 	if errors.IsNotFound(err) {
-		deployment, err = c.kubeclientset.AppsV1().Deployments(website.Namespace).Create(newDeployment(website))
+		fmt.Printf("Received request to create CRD %s\n", deploymentName)
+		serviceIP, servicePort, setupCommands, verifyCmd = createDeployment(website, c)
+		// deployment, err = c.kubeclientset.AppsV1().Deployments(website.Namespace).Create(newDeployment(website))
+		for _, cmds := range setupCommands {
+			actionHistory = append(actionHistory, cmds)
+		}
+		fmt.Printf("Setup Commands: %v\n", setupCommands)
+		fmt.Printf("Verify using: %v\n", verifyCmd)
+		// Finally, we update the status block of the Website resource to reflect the
+		// current state of the world
+		err = c.updateWebsiteStatus(website, &actionHistory, verifyCmd, serviceIP, servicePort, "READY")
+		if err != nil {
+			return err
+		}
+	} else {
+		fmt.Printf("CRD %s created\n", deploymentName)
+		fmt.Printf("Check using: kubectl describe website %s \n", deploymentName)
 	}
 
-	// If an error occurs during Get/Create, we'll requeue the item so we can
-	// attempt processing again later. This could have been caused by a
-	// temporary network failure, or any other transient reason.
-	if err != nil {
-		return err
-	}
+	wp, err := c.websiteclientset.DynamicV1().Websites(website.Namespace).Get(deploymentName, metav1.GetOptions{})
 
-	// If the Deployment is not controlled by this Website resource, we should log
-	// a warning to the event recorder and ret
-	if !metav1.IsControlledBy(deployment, website) {
-		msg := fmt.Sprintf(MessageResourceExists, deployment.Name)
-		c.recorder.Event(website, corev1.EventTypeWarning, ErrResourceExists, msg)
-		return fmt.Errorf(msg)
-	}
+	actionHistory = wp.Status.ActionHistory
+	serviceIP = wp.Status.ServiceIP
+	servicePort = wp.Status.ServicePort
+	verifyCmd = wp.Status.VerifyCmd
+	fmt.Printf("Action History:[%s]\n", actionHistory)
+	fmt.Printf("Service IP:[%s]\n", serviceIP)
+	fmt.Printf("Service Port:[%s]\n", servicePort)
+	fmt.Printf("Verify cmd: %v\n", verifyCmd)
 
-	// If this number of the replicas on the Website resource is specified, and the
-	// number does not equal the current desired replicas on the Deployment, we
-	// should update the Deployment resource.
-	if website.Spec.Replicas != nil && *website.Spec.Replicas != *deployment.Spec.Replicas {
-		klog.V(4).Infof("Website %s replicas: %d, deployment replicas: %d", name, *website.Spec.Replicas, *deployment.Spec.Replicas)
-		deployment, err = c.kubeclientset.AppsV1().Deployments(website.Namespace).Update(newDeployment(website))
-	}
+	setupCommands = canonicalize(website.Spec.Commands)
 
-	// If an error occurs during Update, we'll requeue the item so we can
-	// attempt processing again later. THis could have been caused by a
-	// temporary network failure, or any other transient reason.
-	if err != nil {
-		return err
-	}
+	var commandsToRun []string
+	commandsToRun = getCommandsToRun(actionHistory, setupCommands)
+	fmt.Printf("commandsToRun: %v\n", commandsToRun)
 
-	// Finally, we update the status block of the Website resource to reflect the
-	// current state of the world
-	err = c.updateWebsiteStatus(website, deployment)
-	if err != nil {
-		return err
+	if len(commandsToRun) > 0 {
+		err = c.updateWebsiteStatus(website, &actionHistory, verifyCmd, serviceIP, servicePort, "UPDATING")
+		if err != nil {
+			return err
+		}
+		updateCRD(wp, c, commandsToRun)
+		for _, cmds := range commandsToRun {
+			actionHistory = append(actionHistory, cmds)
+		}
+		err = c.updateWebsiteStatus(website, &actionHistory, verifyCmd, serviceIP, servicePort, "READY")
+		if err != nil {
+			return err
+		}
 	}
 
 	c.recorder.Event(website, corev1.EventTypeNormal, SuccessSynced, MessageResourceSynced)
 	return nil
+
 }
 
-func (c *Controller) updateWebsiteStatus(website *wpv1.Website, deployment *appsv1.Deployment) error {
+func getCommandsToRun(actionHistory []string, setupCommands []string) []string {
+	var commandsToRun []string
+	for _, v := range setupCommands {
+		var found = false
+		for _, v1 := range actionHistory {
+			if v == v1 {
+				found = true
+			}
+		}
+		if !found {
+			commandsToRun = append(commandsToRun, v)
+		}
+	}
+	fmt.Printf("-- commandsToRun: %v--\n", commandsToRun)
+	return commandsToRun
+}
+
+func (w *wpv1.Website) env() []corev1.EnvVar {
+	scheme := "http"
+
+	out := append([]corev1.EnvVar{
+		{
+			Name:  "WP_HOME",
+			Value: fmt.Sprintf("%s://%s", scheme, wp.Spec.Domains[0]),
+		},
+		{
+			Name:  "WP_SITEURL",
+			Value: fmt.Sprintf("%s://%s/wp", scheme, wp.Spec.Domains[0]),
+		},
+	}, w.Spec.Env...)
+
+	return out
+}
+
+func canonicalize(setupCommands1 []string) []string {
+	var setupCommands []string
+	//Convert setupCommands to Lower case
+	for _, cmd := range setupCommands1 {
+		setupCommands = append(setupCommands, strings.ToLower(cmd))
+	}
+	return setupCommands
+}
+
+func (c *Controller) updateWebsiteStatus(website *wpv1.Website, actionHistory *[]string, verifyCmd string, serviceIP string, servicePort string,
+	status string) error {
 	// NEVER modify objects from the store. It's a read-only, local cache.
 	// You can use DeepCopy() to make a deep copy of original object and modify this copy
 	// Or create a copy manually for better performance
 	websiteCopy := website.DeepCopy()
-	websiteCopy.Status.AvailableReplicas = deployment.Status.AvailableReplicas
+	websiteCopy.Status.AvailableReplicas = 1
+
+	//websiteCopy.Status.ActionHistory = strings.Join(*actionHistory, " ")
+	websiteCopy.Status.VerifyCmd = verifyCmd
+	websiteCopy.Status.ActionHistory = *actionHistory
+	websiteCopy.Status.ServiceIP = serviceIP
+	websiteCopy.Status.ServicePort = servicePort
+	websiteCopy.Status.Status = status
+
 	// If the CustomResourceSubresources feature gate is not enabled,
 	// we must use Update instead of UpdateStatus to update the Status block of the Website resource.
 	// UpdateStatus will not allow changes to the Spec of the resource,
@@ -341,7 +419,7 @@ func (c *Controller) enqueueWebsite(obj interface{}) {
 		utilruntime.HandleError(err)
 		return
 	}
-	c.workqueue.Add(key)
+	c.workqueue.AddRateLimited(key)
 }
 
 // handleObject will take any resource implementing metav1.Object and attempt
@@ -384,6 +462,233 @@ func (c *Controller) handleObject(obj interface{}) {
 	}
 }
 
+func updateCRD(website *wpv1.Website, c *Controller, setupCommands []string) {
+	serviceIP := website.Status.ServiceIP
+	servicePort := website.Status.ServicePort
+
+	//setupCommands1 := website.Spec.Commands
+	//var setupCommands []string
+
+	//Convert setupCommands to Lower case
+	//for _, cmd := range setupCommands1 {
+	//	 setupCommands = append(setupCommands, strings.ToLower(cmd))
+	//}
+
+	fmt.Printf("Service IP:[%s]\n", serviceIP)
+	fmt.Printf("Service Port:[%s]\n", servicePort)
+	fmt.Printf("Command:[%s]\n", setupCommands)
+
+	if len(setupCommands) > 0 {
+		file := createTempDBFile(setupCommands)
+		fmt.Println("Now setting up the database")
+		setupDatabase(serviceIP, servicePort, file)
+	}
+}
+
+func createDeployment(website *wpv1.Website, c *Controller) (string, string, []string, string) {
+
+	deploymentsClient := c.kubeclientset.AppsV1().Deployments(apiv1.NamespaceDefault)
+	image := website.Spec.Image
+	env := website.Spec.Env
+	envFrom := website.Spec.EnvFrom
+	username := env["WORDPRESS_DB_USER"]
+	password := env.WORDPRESS_DB_PASSWORD
+	database := env.WORDPRESS_DB_NAME
+	host := env.WORDPRESS_DB_HOST
+	wpPrefix := env.WORDPRESS_TABLE_PREFIX
+	// username := website.Spec.Username
+	// password := website.Spec.Password
+	// database := website.Spec.Database
+	deploymentName := website.Spec.DeploymentName
+	setupCommands := canonicalize(website.Spec.Commands)
+
+	fmt.Printf("   Deployment:%v, Image:%v, User:%v\n", deploymentName, image, username)
+	fmt.Printf("   Password:%v, Database:%v\n", password, database)
+	fmt.Printf("   SetupCmds:%v\n", setupCommands)
+
+	deployment := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: deploymentName,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: int32Ptr(1),
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app": deploymentName,
+				},
+			},
+			Template: apiv1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"app": deploymentName,
+					},
+				},
+				Spec: apiv1.PodSpec{
+					Containers: []apiv1.Container{
+						{
+							Name:  deploymentName,
+							Image: image,
+							Ports: []apiv1.ContainerPort{
+								{
+									ContainerPort: 80,
+								},
+							},
+							ReadinessProbe: &apiv1.Probe{
+								Handler: apiv1.Handler{
+									TCPSocket: &apiv1.TCPSocketAction{
+										Port: apiutil.FromInt(80),
+									},
+								},
+								InitialDelaySeconds: 5,
+								TimeoutSeconds:      60,
+								PeriodSeconds:       2,
+							},
+							Env: []apiv1.EnvVar{
+								{
+									name:  WORDPRESS_DB_HOST,
+									value: host,
+									name:  WORDPRESS_DB_USER,
+									value: username,
+									name:  WORDPRESS_DB_PASSWORD,
+									value: password,
+									name:  WORDPRESS_DB_NAME,
+									value: database,
+									name:  WORDPRESS_TABLE_PREFIX,
+									value: wpPrefix,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// Create Deployment
+	fmt.Println("Creating deployment...")
+	result, err := deploymentsClient.Create(deployment)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Created deployment %q.\n", result.GetObjectMeta().GetName())
+	fmt.Printf("------------------------------\n")
+
+	// Create Service
+	fmt.Printf("Creating service...\n")
+	serviceClient := c.kubeclientset.CoreV1().Services(apiv1.NamespaceDefault)
+	service := &apiv1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: deploymentName,
+			Labels: map[string]string{
+				"app": deploymentName,
+			},
+		},
+		Spec: apiv1.ServiceSpec{
+			Ports: []apiv1.ServicePort{
+				{
+					Name:       "my-port",
+					Port:       5432,
+					TargetPort: apiutil.FromInt(5432),
+					Protocol:   apiv1.ProtocolTCP,
+				},
+			},
+			Selector: map[string]string{
+				"app": deploymentName,
+			},
+			Type: apiv1.ServiceTypeNodePort,
+		},
+	}
+
+	result1, err1 := serviceClient.Create(service)
+	if err1 != nil {
+		panic(err1)
+	}
+	fmt.Printf("Created service %q.\n", result1.GetObjectMeta().GetName())
+	fmt.Printf("------------------------------\n")
+
+	// Parse ServiceIP and Port
+	// Minikube VM IP
+	serviceIP := MINIKUBE_IP
+
+	nodePort1 := result1.Spec.Ports[0].NodePort
+	nodePort := fmt.Sprint(nodePort1)
+	servicePort := nodePort
+	//fmt.Printf("NodePort:[%v]", nodePort)
+
+	//fmt.Println("About to get Pods")
+	time.Sleep(time.Second * 5)
+
+	for {
+		readyPods := 0
+		pods := getPods(c, deploymentName)
+		//fmt.Println("Got Pods:: %s", pods)
+		for _, d := range pods.Items {
+			//fmt.Printf(" * %s %s \n", d.Name, d.Status)
+			podConditions := d.Status.Conditions
+			for _, podCond := range podConditions {
+				if podCond.Type == corev1.PodReady {
+					if podCond.Status == corev1.ConditionTrue {
+						//fmt.Println("Pod is running.")
+						readyPods += 1
+						//fmt.Printf("ReadyPods:%d\n", readyPods)
+						//fmt.Printf("TotalPods:%d\n", len(pods.Items))
+					}
+				}
+			}
+		}
+		if readyPods >= len(pods.Items) {
+			break
+		} else {
+			fmt.Println("Waiting for Pod to get ready.")
+			// Sleep for the Pod to become active
+			time.Sleep(time.Second * 4)
+		}
+	}
+
+	// Wait couple of seconds more just to give the Pod some more time.
+	time.Sleep(time.Second * 2)
+
+	if len(setupCommands) > 0 {
+		file := createTempDBFile(setupCommands)
+		fmt.Println("Now setting up the database")
+		setupDatabase(serviceIP, servicePort, file)
+	}
+
+	// List Deployments
+	//fmt.Printf("Listing deployments in namespace %q:\n", apiv1.NamespaceDefault)
+	//list, err := deploymentsClient.List(metav1.ListOptions{})
+	//if err != nil {
+	//        panic(err)
+	//}
+	//for _, d := range list.Items {
+	//        fmt.Printf(" * %s (%d replicas)\n", d.Name, *d.Spec.Replicas)
+	//}
+
+	verifyCmd := strings.Fields("psql -h " + serviceIP + " -p " + nodePort + " -U <user> " + " -d <db-name>")
+	var verifyCmdString = strings.Join(verifyCmd, " ")
+	fmt.Printf("VerifyCmd: %v\n", verifyCmd)
+	return serviceIP, servicePort, setupCommands, verifyCmdString
+}
+
+func createTempDBFile(setupCommands []string) *os.File {
+	file, err := ioutil.TempFile("/tmp", "create-db1")
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("Database setup file:%s\n", file.Name())
+
+	for _, command := range setupCommands {
+		//fmt.Printf("Command: %v\n", command)
+		// TODO: Interpolation of variables
+		file.WriteString(command)
+		file.WriteString("\n")
+	}
+	file.Sync()
+	file.Close()
+	return file
+}
+
 // newDeployment creates a new Deployment for a Website resource. It also sets
 // the appropriate OwnerReferences on the resource so handleObject can discover
 // the Website resource that 'owns' it.
@@ -421,3 +726,5 @@ func newDeployment(website *wpv1.Website) *appsv1.Deployment {
 		},
 	}
 }
+
+func int32Ptr(i int32) *int32 { return &i }

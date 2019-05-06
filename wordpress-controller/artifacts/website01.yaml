@@ -8,6 +8,7 @@ data:
   USER: root
   PASSWORD: client01
   DATABASE: wordpress
+  PREFIX: WP_
 ---
 apiVersion: v1
 kind: Secret
@@ -31,11 +32,6 @@ metadata:
 spec:
   replicas: 1
   image: ajipsum/wordpress-apache:latest
-  secretRef: website-wp1
-  envFrom:
-    - prefix: "WP_"
-      secretRef:
-        name: wpsalt
   env:
     - name: WORDPRESS_DB_HOST
       value: websites.cujxcm1nmul2.us-east-1.rds.amazonaws.com
@@ -54,4 +50,10 @@ spec:
         secretKeyRef:
         name: database
         key: DATABASE
+    - name: WORDPRESS_TABLE_PREFIX
+      valueFrom:
+          secretKeyRef:
+          name: database
+          key: PREFIX
+
   setupCommands: ["create user client14 with password 'client14';","create database moodle with owner client14 encoding 'utf8' template=template0;"]
