@@ -22,9 +22,9 @@ import (
 	time "time"
 
 	wordpresscontrollerv1 "github.com/k8s-controllers/wordpress-controller/pkg/apis/wordpresscontroller/v1"
-	versioned "github.com/k8s-controllers/wordpress-controller/pkg/client/clientset/versioned"
-	internalinterfaces "github.com/k8s-controllers/wordpress-controller/pkg/client/informers/externalversions/internalinterfaces"
-	v1 "github.com/k8s-controllers/wordpress-controller/pkg/client/listers/wordpresscontroller/v1"
+	versioned "github.com/k8s-controllers/wordpress-controller/pkg/generated/clientset/versioned"
+	internalinterfaces "github.com/k8s-controllers/wordpress-controller/pkg/generated/informers/externalversions/internalinterfaces"
+	v1 "github.com/k8s-controllers/wordpress-controller/pkg/generated/listers/wordpresscontroller/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"

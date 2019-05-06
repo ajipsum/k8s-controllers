@@ -19,9 +19,9 @@ limitations under the License.
 package fake
 
 import (
-	clientset "github.com/k8s-controllers/wordpress-controller/pkg/client/clientset/versioned"
-	dynamicv1 "github.com/k8s-controllers/wordpress-controller/pkg/client/clientset/versioned/typed/wordpresscontroller/v1"
-	fakedynamicv1 "github.com/k8s-controllers/wordpress-controller/pkg/client/clientset/versioned/typed/wordpresscontroller/v1/fake"
+	clientset "github.com/k8s-controllers/wordpress-controller/pkg/generated/clientset/versioned"
+	dynamicv1 "github.com/k8s-controllers/wordpress-controller/pkg/generated/clientset/versioned/typed/wordpresscontroller/v1"
+	fakedynamicv1 "github.com/k8s-controllers/wordpress-controller/pkg/generated/clientset/versioned/typed/wordpresscontroller/v1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"

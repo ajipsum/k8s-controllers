@@ -20,7 +20,7 @@ package v1
 
 import (
 	v1 "github.com/k8s-controllers/wordpress-controller/pkg/apis/wordpresscontroller/v1"
-	"github.com/k8s-controllers/wordpress-controller/pkg/client/clientset/versioned/scheme"
+	"github.com/k8s-controllers/wordpress-controller/pkg/generated/clientset/versioned/scheme"
 	rest "k8s.io/client-go/rest"
 )
 

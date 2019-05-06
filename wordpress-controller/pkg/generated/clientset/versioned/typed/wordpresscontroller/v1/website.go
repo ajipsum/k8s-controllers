@@ -22,7 +22,7 @@ import (
 	"time"
 
 	v1 "github.com/k8s-controllers/wordpress-controller/pkg/apis/wordpresscontroller/v1"
-	scheme "github.com/k8s-controllers/wordpress-controller/pkg/client/clientset/versioned/scheme"
+	scheme "github.com/k8s-controllers/wordpress-controller/pkg/generated/clientset/versioned/scheme"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
