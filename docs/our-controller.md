@@ -1,23 +1,18 @@
-# What is a Controller
+# wordpress-Operator
 
-Controllers implement APIs defined by *Resources*.  Unlike Controllers in the ModelViewController
-pattern, Kubernetes Controllers are run *asynchronously* after the Resources (Models) have
-been written to storage.  This model is highly flexible and allows new Controllers to be
-added for Models through extension instead of modification.
-  
-A Kubernetes Controller is a routine running in a Kubernetes cluster that watches for create /
-update / delete events on Resources, and triggers a Reconcile function in response.  Reconcile
-is a function that may be called at any time with the Namespace and Name of an object (Resource
-instance), and it will make the cluster state match the state declared in the object Spec.
-Upon completion, Reconcile updates the object Status to the new actual state.
+## Controllers vs Operators
 
-It is common for Controllers to watch for changes to the Resource type that they Reconcile
-*and* Resource types of objects they create.  e.g. a ReplicaSet Controller watches for
-changes to ReplicaSets *and* Pods.  The Controller will trigger a Reconcile for a ReplicaSet
+Controllers that implement an API for a specific application, such as Etcd, Spark, or *Wordpress* are often referred to as *Operators*.
+
+Controllers implement APIs defined by *Resources*. Unlike Controllers in the ModelViewController pattern, Kubernetes Controllers are run *asynchronously* after the Resources (Models) have been written to storage. This model is highly flexible and allows new Controllers to be added for Models through extension instead of modification.
+
+A Kubernetes Controller is a routine running in a Kubernetes cluster that watches for create / update / delete events on Resources, and triggers a Reconcile function in response.  Reconcile is a function that may be called at any time with the Namespace and Name of an object (Resource instance), and it will make the cluster state match the state declared in the object Spec. Upon completion, Reconcile updates the object Status to the new actual state.
+
+It is common for Controllers to watch for changes to the Resource type that they Reconcile *and* Resource types of objects they create. e.g. a ReplicaSet Controller watches for changes to ReplicaSets *and* Pods.  The Controller will trigger a Reconcile for a ReplicaSet
 in response to either an event for that ReplicaSet *or* in response to an event for a
 Pod created by that ReplicaSet.
 
-In some cases Reconcile may only update the Status without updating any cluster state.  
+In some cases Reconcile may only update the Status without updating any cluster state.
 
 Illustrative example:
 
@@ -39,7 +34,7 @@ The term *level-based* comes from interrupts hardware, where interrupts may be e
 Kubernetes defines a level-based API as implemented by reading the observed (actual) state of the system,
 comparing it to what is declared in the object *Spec*, and making changes to the system state so
 it matches the state of the Spec **at the time Reconcile is called**.
- 
+
 This has a number of notable properties:
 
 - Reconcile skips intermediate or obsolete values declared in the Spec and
@@ -75,7 +70,7 @@ The Controller Reconcile is triggered by cluster events.
 
 Controllers must watch for events for the Resource they Reconcile. The ReplicaSetController
 watches for changes to ReplicaSets and triggers a Reconcile in response.
- 
+
 ###### ReplicaSet Creation
 
 The following diagram shows a creation event triggering a reconcile.
@@ -179,7 +174,7 @@ kubectl get -w deployments
 kubectl get -w replicasets
 
 # watch pods in terminal 3
-kubectl get -w pods 
+kubectl get -w pods
 
 # create deployment
 kubectl run nginx --image nginx:1.12 --replicas 3
