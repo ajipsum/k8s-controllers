@@ -17,13 +17,17 @@ limitations under the License.
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 	"time"
 
+	// _ "k8s.io/client-go/pkg/api/install"
+	// _ "k8s.io/client-go/pkg/apis/extensions/install"
+
 	apiv1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	apiutil "k8s.io/apimachinery/pkg/util/intstr"
+	k8Yaml "k8s.io/apimachinery/pkg/util/yaml"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -475,7 +479,7 @@ func updateCRD(website *wpv1.Website, c *Controller, setupCommands []string) {
 func createDeployment(website *wpv1.Website, c *Controller) (string, string, []string, string) {
 
 	deploymentsClient := c.kubeclientset.AppsV1().Deployments(apiv1.NamespaceDefault)
-	image := website.Spec.Image
+	// image := website.Spec.Image
 	// 	var env []corev1.EnvVar
 	// envFrom := website.Spec.EnvFrom
 	// username := env["WORDPRESS_DB_USER"]
@@ -491,76 +495,96 @@ func createDeployment(website *wpv1.Website, c *Controller) (string, string, []s
 
 	// fmt.Printf("   Deployment:%v, Image:%v, User:%v\n", deploymentName, image, username)
 	// fmt.Printf("   Password:%v, Database:%v\n", password, database)
-	fmt.Printf("SetupCmds:%v\n", setupCommands)
-	env := []v1.EnvVar{
-		{
-			Name:  "WORDPRESS_DB_HOST",
-			Value: "websites.cujxcm1nmul2.us-east-1.rds.amazonaws.com",
-		},
-		{
-			Name:  "WORDPRESS_DB_USER",
-			Value: "root",
-		},
-		{
-			Name:  "WORDPRESS_DB_PASSWORD",
-			Value: "client01",
-		},
-		{
-			Name:  "WORDPRESS_DB_NAME",
-			Value: "wordpress",
-		},
-		{
-			Name:  "WORDPRESS_TABLE_PREFIX",
-			Value: "WP_",
-		},
-	}
+	// fmt.Printf("SetupCmds:%v\n", setupCommands)
+	// env := []v1.EnvVar{
+	// 	{
+	// 		Name:  "WORDPRESS_DB_HOST",
+	// 		Value: "websites.cujxcm1nmul2.us-east-1.rds.amazonaws.com",
+	// 	},
+	// 	{
+	// 		Name:  "WORDPRESS_DB_USER",
+	// 		Value: "root",
+	// 	},
+	// 	{
+	// 		Name:  "WORDPRESS_DB_PASSWORD",
+	// 		Value: "client01",
+	// 	},
+	// 	{
+	// 		Name:  "WORDPRESS_DB_NAME",
+	// 		Value: "wordpress",
+	// 	},
+	// 	{
+	// 		Name:  "WORDPRESS_TABLE_PREFIX",
+	// 		Value: "WP_",
+	// 	},
+	// }
+	deploymentManifest := `
+	apiVersion: apiextensions.k8s.io/v1beta1
+	kind: CustomResourceDefinition
+	metadata:
+		name: websites.dynamic.microowl.com
+	spec:
+		group: dynamic.microowl.com
+		version: v1
+		names:
+			kind: Website
+			plural: websites
+		scope: Namespaced
+	`
+	deployment := &appsv1.Deployment{}
+	dec := k8Yaml.NewYAMLOrJSONDecoder(bytes.NewReader([]byte(deploymentManifest)), 1000)
 
-	// deploymen := website.wp.WebPodTemplateSpec()
-	deployment := &appsv1.Deployment{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: deploymentName,
-		},
-		Spec: appsv1.DeploymentSpec{
-			Replicas: int32Ptr(1),
-			Selector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"app": deploymentName,
-				},
-			},
-			Template: apiv1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{
-						"app": deploymentName,
-					},
-				},
-
-				Spec: apiv1.PodSpec{
-					Containers: []apiv1.Container{
-						{
-							Name:  deploymentName,
-							Image: image,
-							Ports: []apiv1.ContainerPort{
-								{
-									ContainerPort: 80,
-								},
-							},
-							ReadinessProbe: &apiv1.Probe{
-								Handler: apiv1.Handler{
-									TCPSocket: &apiv1.TCPSocketAction{
-										Port: apiutil.FromInt(8080),
-									},
-								},
-								InitialDelaySeconds: 5,
-								TimeoutSeconds:      60,
-								PeriodSeconds:       2,
-							},
-							Env: env,
-						},
-					},
-				},
-			},
-		},
+	if err := dec.Decode(&deployment); err != nil {
+		return "serviceIP", "servicePort", setupCommands, "verifyCmdString"
 	}
+	fmt.Println("%+v", deployment)
+
+	// // deploymen := website.wp.WebPodTemplateSpec()
+	// deployment := &appsv1.Deployment{
+	// 	ObjectMeta: metav1.ObjectMeta{
+	// 		Name: deploymentName,
+	// 	},
+	// 	Spec: appsv1.DeploymentSpec{
+	// 		Replicas: int32Ptr(1),
+	// 		Selector: &metav1.LabelSelector{
+	// 			MatchLabels: map[string]string{
+	// 				"app": deploymentName,
+	// 			},
+	// 		},
+	// 		Template: apiv1.PodTemplateSpec{
+	// 			ObjectMeta: metav1.ObjectMeta{
+	// 				Labels: map[string]string{
+	// 					"app": deploymentName,
+	// 				},
+	// 			},
+
+	// 			Spec: apiv1.PodSpec{
+	// 				Containers: []apiv1.Container{
+	// 					{
+	// 						Name:  deploymentName,
+	// 						Image: image,
+	// 						Ports: []apiv1.ContainerPort{
+	// 							{
+	// 								ContainerPort: 80,
+	// 							},
+	// 						},
+	// 						ReadinessProbe: &apiv1.Probe{
+	// 							Handler: apiv1.Handler{
+	// 								TCPSocket: &apiv1.TCPSocketAction{
+	// 									Port: apiutil.FromInt(8080),
+	// 								},
+	// 							},
+	// 							InitialDelaySeconds: 5,
+	// 							TimeoutSeconds:      60,
+	// 							PeriodSeconds:       2,
+	// 						},
+	// 						Env: env,
+	// 					},
+	// 				},
+	// 			},
+	// 		},
+	// 	},
+	// }
 
 	// Create Deployment
 	fmt.Println("Creating deployment...")
