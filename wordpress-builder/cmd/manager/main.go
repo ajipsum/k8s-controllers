@@ -22,6 +22,7 @@ import (
 	"github.com/k8s-controllers/wordpress-builder/pkg/apis"
 	"github.com/k8s-controllers/wordpress-builder/pkg/controller"
 	"github.com/k8s-controllers/wordpress-builder/pkg/webhook"
+
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
