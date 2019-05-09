@@ -8,6 +8,7 @@ Controllers implement APIs defined by *Resources*. Unlike Controllers in the Mod
 
 A Kubernetes Controller is a routine running in a Kubernetes cluster that watches for create / update / delete events on Resources, and triggers a Reconcile function in response.  Reconcile is a function that may be called at any time with the Namespace and Name of an object (Resource instance), and it will make the cluster state match the state declared in the object Spec. Upon completion, Reconcile updates the object Status to the new actual state.
 
+
 It is common for Controllers to watch for changes to the Resource type that they Reconcile *and* Resource types of objects they create. e.g. a ReplicaSet Controller watches for changes to ReplicaSets *and* Pods.  The Controller will trigger a Reconcile for a ReplicaSet
 in response to either an event for that ReplicaSet *or* in response to an event for a
 Pod created by that ReplicaSet.
