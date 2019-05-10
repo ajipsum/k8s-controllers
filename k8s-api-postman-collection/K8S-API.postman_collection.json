@@ -265,6 +265,163 @@
 			]
 		},
 		{
+			"name": "wordpress-operator",
+			"item": [
+				{
+					"name": "wordpresses",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{k8s}}/apis/website.k8s.io/v1/wordpresses",
+							"host": [
+								"{{k8s}}"
+							],
+							"path": [
+								"apis",
+								"website.k8s.io",
+								"v1",
+								"wordpresses"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "wordpresses Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{k8s}}/apis/website.k8s.io/v1/wordpresses",
+							"host": [
+								"{{k8s}}"
+							],
+							"path": [
+								"apis",
+								"website.k8s.io",
+								"v1",
+								"wordpresses"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "wordpresses Scale",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{k8s}}/apis/website.k8s.io/v1/wordpresses/scale",
+							"host": [
+								"{{k8s}}"
+							],
+							"path": [
+								"apis",
+								"website.k8s.io",
+								"v1",
+								"wordpresses",
+								"scale"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "ROOT",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name",
+									"value": "myK8Scluster",
+									"type": "text"
+								},
+								{
+									"key": "nodeInstanceType",
+									"value": "t2.medium",
+									"type": "text"
+								},
+								{
+									"key": "nodeInstanceSpotPrice",
+									"value": "0.2",
+									"type": "text"
+								},
+								{
+									"key": "nodeMin",
+									"value": "2",
+									"type": "text"
+								},
+								{
+									"key": "nodeMax",
+									"value": "4",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{k8s}}/apis/website.k8s.io/v1",
+							"host": [
+								"{{k8s}}"
+							],
+							"path": [
+								"apis",
+								"website.k8s.io",
+								"v1"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "6dacbf5c-a42b-44d8-b1d5-d47cbd269809",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "f38fecd1-39da-4533-9c6d-e3cd41a88848",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
 			"name": "k8s API ROOT",
 			"protocolProfileBehavior": {
 				"disableBodyPruning": true
