@@ -42,7 +42,8 @@ func (wp *Wordpress) getNamespace() string {
 
 const (
 	defaultTag   = "latest"
-	defaultImage = "ajipsum/wordpress-apache"
+	defaultImage = "ajipsum/wordpress"
+	defaultDB    = "websites.cujxcm1nmul2.us-east-1.rds.amazonaws.com"
 	// codeSrcMountPath     = "/var/run/presslabs.org/code/src"
 	// defaultCodeMountPath = "/var/www/html/wp-content"
 )
@@ -56,6 +57,10 @@ func (wp *Wordpress) SetDefaults() {
 	if len(wp.Spec.Tag) == 0 {
 		wp.Spec.Tag = defaultTag
 	}
+
+	// if len(wp.Spec.Env[0].Value) == 0 {
+	// 	wp.Spec.Env[0].Value = defaultDB
+	// }
 
 	// if o.Spec.CodeVolumeSpec != nil && len(o.Spec.CodeVolumeSpec.MountPath) == 0 {
 	// 	o.Spec.CodeVolumeSpec.MountPath = defaultCodeMountPath

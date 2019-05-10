@@ -30,13 +30,14 @@ type Domain string
 type WordpressSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	Image string `json:"image"`
+	// +optional
+	Image string `json:"image,omitempty"`
 	// Image tag to use. Defaults to latest
 	// +optional
 	Tag  string `json:"tag,omitempty"`
 	Port string `json:"port"`
-
-	Env []corev1.EnvVar `json:"env" patchStrategy:"merge" patchMergeKey:"name"`
+	// +optional
+	Env []corev1.EnvVar `json:"env,,omitempty" patchStrategy:"merge" patchMergeKey:"name"`
 	// +optional
 	EnvFrom        []corev1.EnvFromSource `json:"envFrom,omitempty"`
 	DeploymentName string                 `json:"deploymentName"`
